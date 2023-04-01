@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Write Until You Die</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+</head>
+<body>
+<!-- Title area -->
+<section id="title" class="row">
+    <div class="container text-center">
+        <h1 id="big-title">Welcome to 'Write Until You Die'</h1>
+        <h4 id="small-title">Once you press 'Start', you have to keep on writing. <br>If you stop
+            for more than 5 seconds, all of your work will automatically be deleted.</h4>
+        <h6>The goal is to fight the blank page effect. Here you have to write, so you don't have time to hesitate <br>
+        As weird as it may sound, this often is the best way to actually think about what you want to say, as you are experimenting.</h6>
+        <h4 id="question"><em>Are you up for the challenge?</em></h4>
+    </div>
+</section>
+
+
+<!-- Writing area -->
+<section class="row">
+    <div class="input-container flex text-center">
+        <div class="start-button" id="start-button">
+            <button class="btn">Start</button>
+        </div>
+        <textarea id="text-area" placeholder="Start writing here when you are ready" disabled></textarea>
+    </div>
+</section>
+
+<div id="word-count" class="text-end mt-2 me-2"></div>
+
+
+<script>
+const startBtn = document.getElementById('start-button');
+const textArea = document.getElementById('text-area');
+const wordCount = document.getElementById('word-count');
+
+
+let timerId = null;
+
+startBtn.addEventListener('click', () => {
+    textArea.disabled = false;
+    textArea.focus();
+    startBtn.style.display = 'none';
+    textArea.value = '';
+
+    let blurAmt = 0;
+    timerId = setInterval(() => {
+        blurAmt += 1;
+        textArea.style.filter = `blur(${blurAmt}px)`;
+        if (blurAmt >= 20) {
+            clearInterval(timerId);
+            textArea.value = '';
+            textArea.style.filter = 'none';
+            startBtn.style.display = 'block';
+            textArea.disabled = true;
+        }
+    }, 250);
+
+});
+
+let timer = null;
+
+textArea.addEventListener('input', () => {
+    clearTimeout(timer);
+    clearTimeout(timerId);
+    textArea.style.filter = 'none';
+    let wordCountValue = textArea.value.trim().split(/\s+/).length;
+    wordCount.textContent = `${wordCountValue} words`;
+    timer = setTimeout(() => {
+        textArea.style.filter = 'blur(5px)';
+        timerId = setInterval(() => {
+            let blurAmt = parseInt(textArea.style.filter.match(/\d+/));
+            blurAmt += 1;
+            textArea.style.filter = `blur(${blurAmt}px)`;
+            if (blurAmt >= 20) {
+                clearInterval(timerId);
+                textArea.value = '';
+                textArea.style.filter = 'none';
+                startBtn.style.display = 'block';
+                textArea.disabled = true;
+                wordCount.textContent = '';
+            }
+        }, 250);
+    }, 5000);
+});
+
+</script>
+
+
+</body>
+</html>
