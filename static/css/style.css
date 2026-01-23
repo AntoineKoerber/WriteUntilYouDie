@@ -1,58 +1,222 @@
-body{
+/**
+ * WriteUntilYouDie - Styles
+ *
+ * Features:
+ * - CSS Custom Properties for theming
+ * - Dark mode support
+ * - Responsive design
+ * - Smooth animations
+ * - Accessibility considerations
+ */
+
+/* ============================================
+   CSS Custom Properties
+   ============================================ */
+:root {
+  /* Colors - Light Mode */
+  --color-primary: #89375F;
+  --color-primary-hover: #6d2c4c;
+  --color-danger: #dc3545;
+  --color-danger-hover: #bb2d3b;
+  --color-secondary: #6c757d;
+
+  /* Backgrounds */
+  --bg-body: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  --bg-card: #ffffff;
+  --bg-highlight: #F3E8FF;
+  --bg-description: #BACDDB;
+
+  /* Text */
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --text-light: #ffffff;
+
+  /* Borders */
+  --border-color: #dee2e6;
+  --border-focus: var(--color-primary);
+
+  /* Shadows */
+  --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  --shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 300ms ease;
+
+  /* Border Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
 }
 
-#title{
-    margin:50px 0 0 0;
+/* Dark Mode Variables */
+.dark-mode {
+  --bg-body: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  --bg-card: #0f0f23;
+  --bg-highlight: rgba(137, 55, 95, 0.3);
+  --bg-description: rgba(186, 205, 219, 0.15);
+
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a0a0;
+
+  --border-color: #333;
+  --shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.4);
 }
 
-#big-title {
-    padding:0 0 40px 0;
-}
-
-#question {
-    padding:40px 0 40px 0;
-}
-
-#small-title{
-    padding:20px;
-    background-color: #F3E8FF;
-    width:100%;
-}
-
-h6 {
-    padding:10px 0 10px 0;
-    background-color: #BACDDB;
-}
-
-#text-area {
-  position: relative;
-  z-index: 0;
-  width: 90%;
-  height: 100%;
-  border: 1px solid green;
-  border-radius:5px;
-  background-color: rgba(255, 255, 255, 0.5);
-  font-size: 18px;
+/* ============================================
+   Base Styles
+   ============================================ */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
-  filter: blur(4px);
 }
 
-input::placeholder {
-        color: gray;
-        font-size: 16px;
-        position: relative;
-        z-index: 1;
+html {
+  scroll-behavior: smooth;
 }
 
-#text-area:focus {
-  background-color: #fff;
-  filter: none;
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg-body);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+               'Helvetica Neue', Arial, sans-serif;
+  color: var(--text-primary);
+  line-height: 1.6;
+  padding: 1rem;
+  transition: background var(--transition-normal),
+              color var(--transition-normal);
 }
 
-.input-container {
+/* ============================================
+   Container
+   ============================================ */
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* ============================================
+   Title Section
+   ============================================ */
+.title-section {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.main-title {
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  font-weight: 700;
+  margin: 0 0 1rem;
+  color: var(--color-primary);
+}
+
+.subtitle {
+  font-size: 1.125rem;
+  margin: 0 0 1rem;
+  padding: 1rem;
+  background: var(--bg-highlight);
+  border-radius: var(--radius-md);
+}
+
+.highlight {
+  display: block;
+  font-weight: 600;
+  color: var(--color-danger);
+  margin-top: 0.5rem;
+}
+
+.description {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin: 0 0 1rem;
+  padding: 0.75rem;
+  background: var(--bg-description);
+  border-radius: var(--radius-md);
+}
+
+.challenge {
+  font-size: 1.25rem;
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   Status Bar
+   ============================================ */
+.status-bar {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-danger .stat-value {
+  color: var(--color-danger);
+}
+
+/* ============================================
+   Progress Bar
+   ============================================ */
+.progress-container {
+  height: 4px;
+  background: var(--border-color);
+  border-radius: 2px;
+  margin-bottom: 1rem;
+  overflow: hidden;
+  opacity: 0.3;
+  transition: opacity var(--transition-normal);
+}
+
+.progress-container.active {
+  opacity: 1;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, var(--color-danger), var(--color-primary));
+  border-radius: 2px;
+  transition: width var(--transition-fast);
+}
+
+/* ============================================
+   Writing Section
+   ============================================ */
+.writing-section {
+  margin-bottom: 1rem;
+}
+
+.writing-container {
   position: relative;
-  width: 80%;
-  height: 500px;
+  min-height: 400px;
 }
 
 .start-button {
@@ -60,15 +224,283 @@ input::placeholder {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 1;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-light);
+  background: var(--color-primary);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition-fast),
+              background-color var(--transition-fast),
+              box-shadow var(--transition-fast);
 }
 
-.start-button button {
-  font-size: 24px;
-  padding: 10px 20px;
-  background-color: #89375F;
-  color: #fff;
-  border-radius: 5px;
+.start-button:hover {
+  background: var(--color-primary-hover);
+  transform: translate(-50%, -50%) scale(1.05);
+  box-shadow: var(--shadow-lg);
 }
 
+.start-button:active {
+  transform: translate(-50%, -50%) scale(0.98);
+}
 
+.start-icon {
+  font-size: 1rem;
+}
+
+.text-area {
+  width: 100%;
+  height: 400px;
+  padding: 1.5rem;
+  font-size: 1.125rem;
+  font-family: inherit;
+  line-height: 1.8;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  resize: vertical;
+  transition: border-color var(--transition-fast),
+              box-shadow var(--transition-fast),
+              filter var(--transition-fast),
+              background-color var(--transition-normal);
+}
+
+.text-area:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(137, 55, 95, 0.15);
+}
+
+.text-area:disabled {
+  background: rgba(255, 255, 255, 0.5);
+  cursor: not-allowed;
+}
+
+.dark-mode .text-area:disabled {
+  background: rgba(15, 15, 35, 0.5);
+}
+
+.text-area.deleted {
+  animation: shake 0.5s ease;
+  border-color: var(--color-danger);
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-10px); }
+  40% { transform: translateX(10px); }
+  60% { transform: translateX(-10px); }
+  80% { transform: translateX(10px); }
+}
+
+/* ============================================
+   Controls
+   ============================================ */
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 0.5rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border-color: var(--border-color);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--bg-highlight);
+  border-color: var(--color-primary);
+}
+
+.btn-danger {
+  color: var(--text-light);
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--color-danger-hover);
+  border-color: var(--color-danger-hover);
+}
+
+/* ============================================
+   Settings
+   ============================================ */
+.settings {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.settings summary {
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.5rem;
+  margin: -0.5rem;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition-fast);
+}
+
+.settings summary:hover {
+  background: var(--bg-highlight);
+}
+
+.settings[open] summary {
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1rem;
+}
+
+.settings-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+.setting-item input[type="number"] {
+  width: 4rem;
+  padding: 0.5rem;
+  font-size: 1rem;
+  text-align: center;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.setting-item input[type="checkbox"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  cursor: pointer;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+@media (max-width: 600px) {
+  body {
+    padding: 0.5rem;
+  }
+
+  .status-bar {
+    gap: 1rem;
+    padding: 0.75rem;
+  }
+
+  .stat-value {
+    font-size: 1.25rem;
+  }
+
+  .writing-container {
+    min-height: 300px;
+  }
+
+  .text-area {
+    height: 300px;
+    padding: 1rem;
+    font-size: 1rem;
+  }
+
+  .start-button {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  .controls {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}
+
+/* ============================================
+   Accessibility
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .text-area,
+  .btn,
+  .settings {
+    border-width: 3px;
+  }
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+@media print {
+  body {
+    background: white;
+  }
+
+  .start-button,
+  .controls,
+  .settings,
+  .progress-container,
+  .status-bar {
+    display: none !important;
+  }
+
+  .text-area {
+    border: 1px solid #ddd;
+    box-shadow: none;
+    height: auto;
+    min-height: 200px;
+  }
+}
