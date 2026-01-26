@@ -61,6 +61,7 @@ const WriteUntilYouDie = (() => {
     elements.loadButton = document.getElementById('load-button');
     elements.resetButton = document.getElementById('reset-button');
     elements.timeoutSetting = document.getElementById('timeout-setting');
+    elements.timeoutDisplay = document.getElementById('timeout-display');
     elements.darkModeToggle = document.getElementById('dark-mode-toggle');
   };
 
@@ -291,9 +292,9 @@ const WriteUntilYouDie = (() => {
 
     try {
       localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(draft));
-      elements.saveButton.textContent = 'Saved!';
+      elements.saveButton.innerHTML = '<span class="btn-icon">&#10003;</span> Saved!';
       setTimeout(() => {
-        elements.saveButton.textContent = 'Save Draft';
+        elements.saveButton.innerHTML = '<span class="btn-icon">&#128190;</span> Save Draft';
       }, 2000);
     } catch (error) {
       console.error('Failed to save draft:', error);
@@ -358,9 +359,13 @@ const WriteUntilYouDie = (() => {
         elements.timeoutSetting.value = state.timeoutSeconds;
         elements.pauseTimer.textContent = `${state.timeoutSeconds.toFixed(1)}s`;
 
+        // Update timeout display in rules section
+        if (elements.timeoutDisplay) {
+          elements.timeoutDisplay.textContent = state.timeoutSeconds;
+        }
+
         if (settings.darkMode) {
           document.body.classList.add('dark-mode');
-          elements.darkModeToggle.checked = true;
         }
       }
     } catch (error) {
@@ -380,6 +385,12 @@ const WriteUntilYouDie = (() => {
     if (value >= 1 && value <= 30) {
       state.timeoutSeconds = value;
       elements.pauseTimer.textContent = `${state.timeoutSeconds.toFixed(1)}s`;
+
+      // Update timeout display in rules section
+      if (elements.timeoutDisplay) {
+        elements.timeoutDisplay.textContent = state.timeoutSeconds;
+      }
+
       saveSettings();
     }
   };
@@ -402,7 +413,7 @@ const WriteUntilYouDie = (() => {
     elements.loadButton.addEventListener('click', loadDraft);
     elements.resetButton.addEventListener('click', resetSession);
     elements.timeoutSetting.addEventListener('change', handleTimeoutChange);
-    elements.darkModeToggle.addEventListener('change', handleDarkModeToggle);
+    elements.darkModeToggle.addEventListener('click', handleDarkModeToggle);
 
     // Keyboard shortcut: Escape to reset
     document.addEventListener('keydown', (event) => {

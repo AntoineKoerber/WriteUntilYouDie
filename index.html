@@ -5,89 +5,119 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="A creative writing exercise tool that forces continuous writing. Stop for more than 5 seconds and lose everything.">
     <title>Write Until You Die - Creative Writing Exercise</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="static/css/style.css">
 </head>
 <body>
-    <main class="container">
-        <!-- Title Section -->
-        <header class="title-section">
-            <h1 class="main-title">Write Until You Die</h1>
-            <p class="subtitle">
-                Once you press <strong>Start</strong>, you must keep writing.
-                <span class="highlight">Stop for more than 5 seconds and lose everything.</span>
-            </p>
-            <p class="description">
-                Combat writer's block by removing the option to hesitate.
-                When you can't stop, you discover what you truly want to say.
-            </p>
-            <p class="challenge"><em>Are you up for the challenge?</em></p>
-        </header>
-
-        <!-- Status Bar -->
-        <div class="status-bar">
-            <div class="stat">
-                <span class="stat-label">Words</span>
-                <span class="stat-value" id="word-count">0</span>
-            </div>
-            <div class="stat">
-                <span class="stat-label">Time</span>
-                <span class="stat-value" id="elapsed-time">0:00</span>
-            </div>
-            <div class="stat stat-danger">
-                <span class="stat-label">Pause Left</span>
-                <span class="stat-value" id="pause-timer">5.0s</span>
-            </div>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span class="brand-icon">&#9998;</span>
+            <span class="brand-text">WriteUntilYouDie</span>
         </div>
-
-        <!-- Progress Bar (shows time until deletion) -->
-        <div class="progress-container" id="progress-container">
-            <div class="progress-bar" id="progress-bar"></div>
+        <div class="nav-actions">
+            <button type="button" class="theme-toggle" id="dark-mode-toggle" title="Toggle dark mode">
+                <span class="theme-icon sun">&#9788;</span>
+                <span class="theme-icon moon">&#9790;</span>
+            </button>
         </div>
+    </nav>
 
-        <!-- Writing Area -->
-        <section class="writing-section">
-            <div class="writing-container">
-                <button type="button" class="start-button" id="start-button">
-                    <span class="start-icon">&#9654;</span>
-                    Start Writing
-                </button>
-                <textarea
-                    id="text-area"
-                    class="text-area"
-                    placeholder="Your words will appear here..."
-                    disabled
-                    aria-label="Writing area"></textarea>
-            </div>
+    <main class="main-content">
+        <!-- Hero Section -->
+        <section class="hero">
+            <h1 class="hero-title">Write Until You Die</h1>
+            <p class="hero-subtitle">The writing tool that doesn't let you stop</p>
         </section>
 
-        <!-- Controls -->
-        <div class="controls">
-            <button type="button" class="btn btn-secondary" id="save-button" disabled>
-                Save Draft
-            </button>
-            <button type="button" class="btn btn-secondary" id="load-button">
-                Load Draft
-            </button>
-            <button type="button" class="btn btn-danger" id="reset-button" disabled>
-                Reset
-            </button>
-        </div>
+        <!-- App Container -->
+        <div class="app-container">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-card rules-card">
+                    <h3 class="sidebar-title">The Rules</h3>
+                    <ul class="rules-list">
+                        <li>Press <strong>Start</strong> to begin</li>
+                        <li>Keep writing continuously</li>
+                        <li>Stop for <span id="timeout-display">5</span>s and <span class="text-danger">lose everything</span></li>
+                    </ul>
+                </div>
 
-        <!-- Settings -->
-        <details class="settings">
-            <summary>Settings</summary>
-            <div class="settings-content">
-                <label class="setting-item">
-                    <span>Pause timeout (seconds)</span>
-                    <input type="number" id="timeout-setting" min="1" max="30" value="5">
-                </label>
-                <label class="setting-item">
-                    <span>Dark mode</span>
-                    <input type="checkbox" id="dark-mode-toggle">
-                </label>
+                <div class="sidebar-card stats-card">
+                    <h3 class="sidebar-title">Your Stats</h3>
+                    <div class="stat-row">
+                        <span class="stat-label">Words</span>
+                        <span class="stat-value" id="word-count">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Time</span>
+                        <span class="stat-value" id="elapsed-time">0:00</span>
+                    </div>
+                    <div class="stat-row danger">
+                        <span class="stat-label">Pause Left</span>
+                        <span class="stat-value" id="pause-timer">5.0s</span>
+                    </div>
+                </div>
+
+                <div class="sidebar-card settings-card">
+                    <h3 class="sidebar-title">Settings</h3>
+                    <label class="setting-row">
+                        <span>Timeout (seconds)</span>
+                        <input type="number" id="timeout-setting" min="1" max="30" value="5" class="setting-input">
+                    </label>
+                </div>
+
+                <div class="sidebar-card actions-card">
+                    <button type="button" class="btn btn-outline" id="save-button" disabled>
+                        <span class="btn-icon">&#128190;</span> Save Draft
+                    </button>
+                    <button type="button" class="btn btn-outline" id="load-button">
+                        <span class="btn-icon">&#128194;</span> Load Draft
+                    </button>
+                    <button type="button" class="btn btn-danger-outline" id="reset-button" disabled>
+                        <span class="btn-icon">&#10006;</span> Reset
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main Writing Area -->
+            <div class="editor-container">
+                <!-- Progress Bar -->
+                <div class="progress-container" id="progress-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+
+                <!-- Writing Area -->
+                <div class="editor-wrapper">
+                    <button type="button" class="start-button" id="start-button">
+                        <span class="start-icon">&#9654;</span>
+                        <span class="start-text">Start Writing</span>
+                        <span class="start-hint">Press to begin your challenge</span>
+                    </button>
+                    <textarea
+                        id="text-area"
+                        class="text-area"
+                        placeholder="Your story begins here..."
+                        disabled
+                        aria-label="Writing area"></textarea>
+                </div>
+
+                <!-- Motivational Footer -->
+                <div class="editor-footer">
+                    <p class="tip">
+                        <strong>Tip:</strong> Don't think, just write. Your inner critic can wait.
+                    </p>
+                </div>
             </div>
-        </details>
+        </div>
     </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>Built to overcome writer's block. <a href="https://github.com/AntoineKoerber/WriteUntilYouDie" target="_blank">View Source</a></p>
+    </footer>
 
     <script src="static/js/main.js"></script>
 </body>
