@@ -337,7 +337,7 @@ const WriteUntilYouDie = (() => {
   const saveSettings = () => {
     const settings = {
       timeout: state.timeoutSeconds,
-      darkMode: document.body.classList.contains('dark-mode'),
+      lightMode: document.body.classList.contains('light-mode'),
     };
 
     try {
@@ -364,8 +364,9 @@ const WriteUntilYouDie = (() => {
           elements.timeoutDisplay.textContent = state.timeoutSeconds;
         }
 
-        if (settings.darkMode) {
-          document.body.classList.add('dark-mode');
+        // Light mode is opt-in (dark mode is default)
+        if (settings.lightMode) {
+          document.body.classList.add('light-mode');
         }
       }
     } catch (error) {
@@ -396,10 +397,10 @@ const WriteUntilYouDie = (() => {
   };
 
   /**
-   * Handles dark mode toggle
+   * Handles theme toggle (dark mode is default, toggle to light)
    */
   const handleDarkModeToggle = () => {
-    document.body.classList.toggle('dark-mode');
+    document.body.classList.toggle('light-mode');
     saveSettings();
   };
 
