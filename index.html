@@ -30,6 +30,11 @@
         <section class="hero">
             <h1 class="hero-title">Write Until You Die</h1>
             <p class="hero-subtitle">Stop typing and everything disappears</p>
+            <p class="hero-description">
+                The cure to the blank page. Start writing and don't stop &mdash;
+                this tool keeps you in the flow by erasing everything if you pause for too long.
+                No overthinking, no editing, just pure unfiltered writing.
+            </p>
         </section>
 
         <!-- App Container -->
@@ -112,6 +117,23 @@
                 </div>
             </div>
         </div>
+
+        <!-- History Section -->
+        <section class="history-section">
+            <div class="history-header">
+                <h2 class="history-title">Writing History</h2>
+                <button type="button" class="btn btn-sm btn-danger-outline" id="clear-history" style="display:none">
+                    <span class="btn-icon">&#10006;</span> Clear All
+                </button>
+            </div>
+            <p class="history-description">
+                Your previous writing sessions are saved here automatically. Continue where you left off or copy your work.
+            </p>
+            <p class="history-empty-state" id="history-empty">
+                No writing history yet. Start a session and your work will appear here.
+            </p>
+            <div class="history-list" id="history-list"></div>
+        </section>
     </main>
 
     <!-- Footer -->

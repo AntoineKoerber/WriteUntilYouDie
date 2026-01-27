@@ -2,53 +2,39 @@
  * WriteUntilYouDie - Creative Writing Exercise Tool
  *
  * Features:
- * - Continuous writing enforcement with configurable timeout
- * - Visual countdown and blur effect when pausing
+ * - Countdown starts immediately when user stops typing
+ * - Heartbeat animation during countdown (1 beat/sec)
  * - Word count and elapsed time tracking
- * - Draft save/load with localStorage
- * - Dark mode support
- * - Accessibility considerations
+ * - Writing history with copy/continue support
+ * - Dark mode support (dark by default)
  *
  * @module WriteUntilYouDie
  */
 const WriteUntilYouDie = (() => {
   'use strict';
 
-  // ============================================
-  // Configuration
-  // ============================================
   const CONFIG = {
     STORAGE_KEY: 'write-until-you-die-draft',
     SETTINGS_KEY: 'write-until-you-die-settings',
-    DEFAULT_TIMEOUT: 5, // seconds
-    BLUR_INCREMENT: 1, // pixels per tick
-    BLUR_MAX: 20, // maximum blur before deletion
-    TICK_INTERVAL: 250, // milliseconds
+    HISTORY_KEY: 'write-until-you-die-history',
+    DEFAULT_TIMEOUT: 5,
+    MAX_HISTORY: 20,
+    COUNTDOWN_INTERVAL: 100, // ms — update countdown frequently for smooth display
   };
 
-  // ============================================
-  // State
-  // ============================================
   const state = {
     isActive: false,
-    isPaused: false,
+    countdownActive: false,
     startTime: null,
-    pauseTime: null,
-    blurAmount: 0,
+    countdownStart: null,
     timeoutSeconds: CONFIG.DEFAULT_TIMEOUT,
-    pauseTimerId: null,
-    blurTimerId: null,
+    countdownTimerId: null,
     elapsedTimerId: null,
+    heartbeatCount: 0,
   };
 
-  // ============================================
-  // DOM Elements (cached)
-  // ============================================
   const elements = {};
 
-  /**
-   * Cache DOM element references for performance
-   */
   const cacheElements = () => {
     elements.startButton = document.getElementById('start-button');
     elements.textArea = document.getElementById('text-area');
@@ -63,49 +49,46 @@ const WriteUntilYouDie = (() => {
     elements.timeoutSetting = document.getElementById('timeout-setting');
     elements.timeoutDisplay = document.getElementById('timeout-display');
     elements.darkModeToggle = document.getElementById('dark-mode-toggle');
+    elements.historyList = document.getElementById('history-list');
+    elements.historyEmpty = document.getElementById('history-empty');
+    elements.clearHistoryBtn = document.getElementById('clear-history');
+    elements.editorWrapper = document.querySelector('.editor-wrapper');
   };
 
   // ============================================
   // Utility Functions
   // ============================================
 
-  /**
-   * Formats seconds as M:SS
-   * @param {number} totalSeconds - Total seconds elapsed
-   * @returns {string} Formatted time string
-   */
   const formatTime = (totalSeconds) => {
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = Math.floor(totalSeconds % 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  /**
-   * Counts words in text
-   * @param {string} text - Text to count words in
-   * @returns {number} Word count
-   */
   const countWords = (text) => {
     const trimmed = text.trim();
     if (!trimmed) return 0;
     return trimmed.split(/\s+/).length;
   };
 
+  const formatDate = (isoString) => {
+    const d = new Date(isoString);
+    const now = new Date();
+    const diff = now - d;
+    if (diff < 60000) return 'Just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
   // ============================================
-  // Timer Functions
+  // Timer & Countdown
   // ============================================
 
-  /**
-   * Clears all active timers
-   */
   const clearAllTimers = () => {
-    if (state.pauseTimerId) {
-      clearTimeout(state.pauseTimerId);
-      state.pauseTimerId = null;
-    }
-    if (state.blurTimerId) {
-      clearInterval(state.blurTimerId);
-      state.blurTimerId = null;
+    if (state.countdownTimerId) {
+      clearInterval(state.countdownTimerId);
+      state.countdownTimerId = null;
     }
     if (state.elapsedTimerId) {
       clearInterval(state.elapsedTimerId);
@@ -113,9 +96,6 @@ const WriteUntilYouDie = (() => {
     }
   };
 
-  /**
-   * Starts the elapsed time counter
-   */
   const startElapsedTimer = () => {
     state.elapsedTimerId = setInterval(() => {
       if (state.startTime && state.isActive) {
@@ -126,80 +106,88 @@ const WriteUntilYouDie = (() => {
   };
 
   /**
-   * Starts the blur effect animation
+   * Starts countdown immediately when user stops typing.
+   * Heartbeat pulses once per second.
    */
-  const startBlurEffect = () => {
-    state.isPaused = true;
-    state.pauseTime = Date.now();
+  const startCountdown = () => {
+    state.countdownActive = true;
+    state.countdownStart = Date.now();
+    state.heartbeatCount = 0;
     elements.progressContainer.classList.add('active');
+    elements.editorWrapper.classList.add('countdown-active');
 
-    state.blurTimerId = setInterval(() => {
-      state.blurAmount += CONFIG.BLUR_INCREMENT;
-      elements.textArea.style.filter = `blur(${state.blurAmount}px)`;
+    // Trigger first heartbeat immediately
+    triggerHeartbeat();
 
-      // Update progress bar
-      const progress = (state.blurAmount / CONFIG.BLUR_MAX) * 100;
-      elements.progressBar.style.width = `${100 - progress}%`;
+    state.countdownTimerId = setInterval(() => {
+      const elapsed = (Date.now() - state.countdownStart) / 1000;
+      const remaining = Math.max(0, state.timeoutSeconds - elapsed);
+      const progress = remaining / state.timeoutSeconds;
 
-      // Update pause timer display
-      const timeLeft = Math.max(0, state.timeoutSeconds - (state.blurAmount / CONFIG.BLUR_MAX) * state.timeoutSeconds);
-      elements.pauseTimer.textContent = `${timeLeft.toFixed(1)}s`;
+      // Update UI
+      elements.progressBar.style.width = `${progress * 100}%`;
+      elements.pauseTimer.textContent = `${remaining.toFixed(1)}s`;
 
-      // Check if text should be deleted
-      if (state.blurAmount >= CONFIG.BLUR_MAX) {
+      // Blur increases as time runs out
+      const blurAmount = ((1 - progress) * 15);
+      elements.textArea.style.filter = `blur(${blurAmount}px)`;
+
+      // Heartbeat: 1 per second
+      const currentBeat = Math.floor(elapsed);
+      if (currentBeat > state.heartbeatCount) {
+        state.heartbeatCount = currentBeat;
+        triggerHeartbeat();
+      }
+
+      // Time's up
+      if (remaining <= 0) {
         handleTextDeletion();
       }
-    }, CONFIG.TICK_INTERVAL);
+    }, CONFIG.COUNTDOWN_INTERVAL);
   };
 
-  /**
-   * Stops the blur effect and resets visual state
-   */
-  const stopBlurEffect = () => {
-    if (state.blurTimerId) {
-      clearInterval(state.blurTimerId);
-      state.blurTimerId = null;
+  const triggerHeartbeat = () => {
+    elements.editorWrapper.classList.remove('heartbeat');
+    // Force reflow to restart animation
+    void elements.editorWrapper.offsetWidth;
+    elements.editorWrapper.classList.add('heartbeat');
+  };
+
+  const stopCountdown = () => {
+    if (state.countdownTimerId) {
+      clearInterval(state.countdownTimerId);
+      state.countdownTimerId = null;
     }
 
-    state.isPaused = false;
-    state.blurAmount = 0;
+    state.countdownActive = false;
+    state.countdownStart = null;
+    state.heartbeatCount = 0;
     elements.textArea.style.filter = 'none';
     elements.progressBar.style.width = '100%';
     elements.progressContainer.classList.remove('active');
+    elements.editorWrapper.classList.remove('countdown-active', 'heartbeat');
     elements.pauseTimer.textContent = `${state.timeoutSeconds.toFixed(1)}s`;
-  };
-
-  /**
-   * Starts the pause timeout
-   */
-  const startPauseTimeout = () => {
-    // Clear any existing pause timer
-    if (state.pauseTimerId) {
-      clearTimeout(state.pauseTimerId);
-    }
-
-    state.pauseTimerId = setTimeout(() => {
-      startBlurEffect();
-    }, state.timeoutSeconds * 1000);
   };
 
   // ============================================
   // Core Logic
   // ============================================
 
-  /**
-   * Handles text deletion when blur completes
-   */
   const handleTextDeletion = () => {
+    const text = elements.textArea.value.trim();
+    const words = countWords(text);
+
+    // Auto-save to history if there was meaningful content
+    if (text.length > 0 && words >= 3) {
+      saveToHistory(text, words);
+    }
+
     clearAllTimers();
 
-    // Reset state
     state.isActive = false;
-    state.isPaused = false;
-    state.blurAmount = 0;
+    state.countdownActive = false;
     state.startTime = null;
 
-    // Reset UI
     elements.textArea.value = '';
     elements.textArea.style.filter = 'none';
     elements.textArea.disabled = true;
@@ -209,58 +197,52 @@ const WriteUntilYouDie = (() => {
     elements.pauseTimer.textContent = `${state.timeoutSeconds.toFixed(1)}s`;
     elements.progressBar.style.width = '100%';
     elements.progressContainer.classList.remove('active');
+    elements.editorWrapper.classList.remove('countdown-active', 'heartbeat');
     elements.saveButton.disabled = true;
     elements.resetButton.disabled = true;
 
-    // Visual feedback for deletion
     elements.textArea.classList.add('deleted');
     setTimeout(() => {
       elements.textArea.classList.remove('deleted');
     }, 500);
   };
 
-  /**
-   * Starts the writing session
-   */
-  const startSession = () => {
+  const startSession = (initialText) => {
     state.isActive = true;
     state.startTime = Date.now();
 
     elements.textArea.disabled = false;
-    elements.textArea.value = '';
+    elements.textArea.value = typeof initialText === 'string' ? initialText : '';
     elements.textArea.focus();
+    // Place cursor at end if continuing
+    if (typeof initialText === 'string') {
+      elements.textArea.setSelectionRange(initialText.length, initialText.length);
+      elements.wordCount.textContent = countWords(initialText).toString();
+    }
     elements.startButton.style.display = 'none';
     elements.saveButton.disabled = false;
     elements.resetButton.disabled = false;
 
     startElapsedTimer();
-    startPauseTimeout();
+    // Countdown starts immediately — user must begin typing right away
+    startCountdown();
   };
 
-  /**
-   * Handles user input in the text area
-   */
   const handleInput = () => {
-    // Reset blur effect on any input
-    stopBlurEffect();
+    stopCountdown();
 
-    // Update word count
     const words = countWords(elements.textArea.value);
     elements.wordCount.textContent = words.toString();
 
-    // Restart pause timeout
-    startPauseTimeout();
+    // Restart countdown immediately
+    startCountdown();
   };
 
-  /**
-   * Resets the session
-   */
   const resetSession = () => {
     clearAllTimers();
+    stopCountdown();
 
     state.isActive = false;
-    state.isPaused = false;
-    state.blurAmount = 0;
     state.startTime = null;
 
     elements.textArea.value = '';
@@ -272,26 +254,148 @@ const WriteUntilYouDie = (() => {
     elements.pauseTimer.textContent = `${state.timeoutSeconds.toFixed(1)}s`;
     elements.progressBar.style.width = '100%';
     elements.progressContainer.classList.remove('active');
+    elements.editorWrapper.classList.remove('countdown-active', 'heartbeat');
     elements.saveButton.disabled = true;
     elements.resetButton.disabled = true;
+  };
+
+  // ============================================
+  // History Functions
+  // ============================================
+
+  const getHistory = () => {
+    try {
+      const saved = localStorage.getItem(CONFIG.HISTORY_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const saveToHistory = (text, wordCount) => {
+    const history = getHistory();
+    history.unshift({
+      id: Date.now().toString(),
+      text,
+      wordCount,
+      savedAt: new Date().toISOString(),
+    });
+
+    // Limit history size
+    if (history.length > CONFIG.MAX_HISTORY) {
+      history.length = CONFIG.MAX_HISTORY;
+    }
+
+    try {
+      localStorage.setItem(CONFIG.HISTORY_KEY, JSON.stringify(history));
+    } catch (error) {
+      console.error('Failed to save history:', error);
+    }
+
+    renderHistory();
+  };
+
+  const deleteFromHistory = (id) => {
+    const history = getHistory().filter(h => h.id !== id);
+    try {
+      localStorage.setItem(CONFIG.HISTORY_KEY, JSON.stringify(history));
+    } catch (error) {
+      console.error('Failed to update history:', error);
+    }
+    renderHistory();
+  };
+
+  const clearHistory = () => {
+    try {
+      localStorage.removeItem(CONFIG.HISTORY_KEY);
+    } catch (error) {
+      console.error('Failed to clear history:', error);
+    }
+    renderHistory();
+  };
+
+  const continueFromHistory = (id) => {
+    const history = getHistory();
+    const entry = history.find(h => h.id === id);
+    if (entry) {
+      if (state.isActive) {
+        resetSession();
+      }
+      startSession(entry.text);
+    }
+  };
+
+  const copyFromHistory = (id) => {
+    const history = getHistory();
+    const entry = history.find(h => h.id === id);
+    if (entry) {
+      navigator.clipboard.writeText(entry.text).then(() => {
+        const btn = document.querySelector(`[data-copy-id="${id}"]`);
+        if (btn) {
+          const original = btn.innerHTML;
+          btn.innerHTML = '&#10003; Copied';
+          setTimeout(() => { btn.innerHTML = original; }, 1500);
+        }
+      });
+    }
+  };
+
+  const renderHistory = () => {
+    const history = getHistory();
+
+    if (history.length === 0) {
+      elements.historyList.innerHTML = '';
+      elements.historyEmpty.style.display = 'block';
+      elements.clearHistoryBtn.style.display = 'none';
+      return;
+    }
+
+    elements.historyEmpty.style.display = 'none';
+    elements.clearHistoryBtn.style.display = 'inline-flex';
+
+    elements.historyList.innerHTML = history.map(entry => {
+      const preview = entry.text.length > 120
+        ? entry.text.substring(0, 120) + '...'
+        : entry.text;
+
+      return `
+        <div class="history-entry" data-id="${entry.id}">
+          <div class="history-meta">
+            <span class="history-words">${entry.wordCount} words</span>
+            <span class="history-date">${formatDate(entry.savedAt)}</span>
+          </div>
+          <p class="history-preview">${preview.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+          <div class="history-actions">
+            <button type="button" class="btn btn-sm btn-outline" data-continue-id="${entry.id}">
+              &#9654; Continue
+            </button>
+            <button type="button" class="btn btn-sm btn-outline" data-copy-id="${entry.id}">
+              &#128203; Copy
+            </button>
+            <button type="button" class="btn btn-sm btn-danger-outline" data-delete-id="${entry.id}">
+              &#10006;
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
   };
 
   // ============================================
   // Storage Functions
   // ============================================
 
-  /**
-   * Saves the current draft to localStorage
-   */
   const saveDraft = () => {
-    const draft = {
-      text: elements.textArea.value,
-      wordCount: countWords(elements.textArea.value),
-      savedAt: new Date().toISOString(),
-    };
+    const text = elements.textArea.value;
+    const words = countWords(text);
+    const draft = { text, wordCount: words, savedAt: new Date().toISOString() };
 
     try {
       localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(draft));
+      // Also save to history
+      if (text.trim().length > 0 && words >= 3) {
+        saveToHistory(text, words);
+      }
       elements.saveButton.innerHTML = '<span class="btn-icon">&#10003;</span> Saved!';
       setTimeout(() => {
         elements.saveButton.innerHTML = '<span class="btn-icon">&#128190;</span> Save Draft';
@@ -301,29 +405,13 @@ const WriteUntilYouDie = (() => {
     }
   };
 
-  /**
-   * Loads a saved draft from localStorage
-   */
   const loadDraft = () => {
     try {
       const saved = localStorage.getItem(CONFIG.STORAGE_KEY);
       if (saved) {
         const draft = JSON.parse(saved);
         if (draft.text) {
-          // Start session with loaded text
-          state.isActive = true;
-          state.startTime = Date.now();
-
-          elements.textArea.disabled = false;
-          elements.textArea.value = draft.text;
-          elements.textArea.focus();
-          elements.startButton.style.display = 'none';
-          elements.wordCount.textContent = draft.wordCount.toString();
-          elements.saveButton.disabled = false;
-          elements.resetButton.disabled = false;
-
-          startElapsedTimer();
-          startPauseTimeout();
+          startSession(draft.text);
         }
       }
     } catch (error) {
@@ -331,15 +419,11 @@ const WriteUntilYouDie = (() => {
     }
   };
 
-  /**
-   * Saves settings to localStorage
-   */
   const saveSettings = () => {
     const settings = {
       timeout: state.timeoutSeconds,
       lightMode: document.body.classList.contains('light-mode'),
     };
-
     try {
       localStorage.setItem(CONFIG.SETTINGS_KEY, JSON.stringify(settings));
     } catch (error) {
@@ -347,9 +431,6 @@ const WriteUntilYouDie = (() => {
     }
   };
 
-  /**
-   * Loads settings from localStorage
-   */
   const loadSettings = () => {
     try {
       const saved = localStorage.getItem(CONFIG.SETTINGS_KEY);
@@ -359,12 +440,10 @@ const WriteUntilYouDie = (() => {
         elements.timeoutSetting.value = state.timeoutSeconds;
         elements.pauseTimer.textContent = `${state.timeoutSeconds.toFixed(1)}s`;
 
-        // Update timeout display in rules section
         if (elements.timeoutDisplay) {
           elements.timeoutDisplay.textContent = state.timeoutSeconds;
         }
 
-        // Light mode is opt-in (dark mode is default)
         if (settings.lightMode) {
           document.body.classList.add('light-mode');
         }
@@ -378,37 +457,39 @@ const WriteUntilYouDie = (() => {
   // Event Handlers
   // ============================================
 
-  /**
-   * Handles timeout setting change
-   */
   const handleTimeoutChange = () => {
     const value = parseInt(elements.timeoutSetting.value, 10);
     if (value >= 1 && value <= 30) {
       state.timeoutSeconds = value;
       elements.pauseTimer.textContent = `${state.timeoutSeconds.toFixed(1)}s`;
-
-      // Update timeout display in rules section
       if (elements.timeoutDisplay) {
         elements.timeoutDisplay.textContent = state.timeoutSeconds;
       }
-
       saveSettings();
     }
   };
 
-  /**
-   * Handles theme toggle (dark mode is default, toggle to light)
-   */
   const handleDarkModeToggle = () => {
     document.body.classList.toggle('light-mode');
     saveSettings();
   };
 
-  /**
-   * Binds all event listeners
-   */
+  const handleHistoryClick = (e) => {
+    const continueBtn = e.target.closest('[data-continue-id]');
+    const copyBtn = e.target.closest('[data-copy-id]');
+    const deleteBtn = e.target.closest('[data-delete-id]');
+
+    if (continueBtn) {
+      continueFromHistory(continueBtn.dataset.continueId);
+    } else if (copyBtn) {
+      copyFromHistory(copyBtn.dataset.copyId);
+    } else if (deleteBtn) {
+      deleteFromHistory(deleteBtn.dataset.deleteId);
+    }
+  };
+
   const bindEvents = () => {
-    elements.startButton.addEventListener('click', startSession);
+    elements.startButton.addEventListener('click', () => startSession());
     elements.textArea.addEventListener('input', handleInput);
     elements.saveButton.addEventListener('click', saveDraft);
     elements.loadButton.addEventListener('click', loadDraft);
@@ -416,7 +497,14 @@ const WriteUntilYouDie = (() => {
     elements.timeoutSetting.addEventListener('change', handleTimeoutChange);
     elements.darkModeToggle.addEventListener('click', handleDarkModeToggle);
 
-    // Keyboard shortcut: Escape to reset
+    // History events (delegated)
+    if (elements.historyList) {
+      elements.historyList.addEventListener('click', handleHistoryClick);
+    }
+    if (elements.clearHistoryBtn) {
+      elements.clearHistoryBtn.addEventListener('click', clearHistory);
+    }
+
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && state.isActive) {
         resetSession();
@@ -428,25 +516,20 @@ const WriteUntilYouDie = (() => {
   // Initialization
   // ============================================
 
-  /**
-   * Initializes the application
-   */
   const init = () => {
     cacheElements();
     loadSettings();
     bindEvents();
-
+    renderHistory();
     console.log('WriteUntilYouDie initialized');
   };
 
-  // Initialize when DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
   }
 
-  // Public API (for debugging)
   return {
     getState: () => ({ ...state }),
     reset: resetSession,
