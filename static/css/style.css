@@ -236,7 +236,7 @@ body::after {
 .main-content {
   max-width: 1400px;
   margin: 0 auto;
-  padding: var(--space-xl);
+  padding: var(--space-md) var(--space-xl);
 }
 
 /* ============================================
@@ -244,14 +244,14 @@ body::after {
    ============================================ */
 .hero {
   text-align: center;
-  margin-bottom: var(--space-2xl);
+  margin-bottom: var(--space-md);
   position: relative;
 }
 
 .hero-title {
-  font-size: clamp(2.5rem, 6vw, 4rem);
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
   font-weight: 800;
-  margin: 0 0 var(--space-sm);
+  margin: 0 0 var(--space-xs);
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 50%, var(--color-primary) 100%);
   background-size: 200% 200%;
   -webkit-background-clip: text;
@@ -269,7 +269,7 @@ body::after {
 }
 
 .hero-subtitle {
-  font-size: 1rem;
+  font-size: 0.85rem;
   color: var(--text-secondary);
   margin: 0;
   letter-spacing: 2px;
@@ -278,10 +278,10 @@ body::after {
 
 .hero-description {
   max-width: 600px;
-  margin: var(--space-lg) auto 0;
-  font-size: 0.95rem;
+  margin: var(--space-sm) auto 0;
+  font-size: 0.85rem;
   color: var(--text-muted);
-  line-height: 1.7;
+  line-height: 1.5;
 }
 
 /* ============================================
