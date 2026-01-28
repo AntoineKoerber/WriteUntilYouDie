@@ -152,12 +152,12 @@ const WriteUntilYouDie = (() => {
       elements.progressBar.style.width = `${progress * 100}%`;
       elements.pauseTimer.textContent = `${remaining.toFixed(1)}s`;
 
-      // Pulsing blur: base level rises over time, beats cause spikes
-      const baseBlur = (1 - progress) * 10;
+      // Pulsing blur: base level rises slowly, beats cause gentle spikes
+      const baseBlur = (1 - progress) * 4;
       const timeSinceBeat = (Date.now() - state.lastBeatTime) / 1000;
-      // Sharp spike that decays: peaks at ~0.15s, fades by ~0.6s
+      // Gentle spike that decays over ~0.6s
       const beatPulse = timeSinceBeat < 0.6
-        ? Math.sin(timeSinceBeat / 0.6 * Math.PI) * (6 + baseBlur * 0.5)
+        ? Math.sin(timeSinceBeat / 0.6 * Math.PI) * (2 + baseBlur * 0.3)
         : 0;
       elements.textArea.style.filter = `blur(${baseBlur + beatPulse}px)`;
 
