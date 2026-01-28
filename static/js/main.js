@@ -28,6 +28,7 @@ const WriteUntilYouDie = (() => {
     startTime: null,
     countdownStart: null,
     timeoutSeconds: CONFIG.DEFAULT_TIMEOUT,
+    graceTimerId: null,
     countdownTimerId: null,
     elapsedTimerId: null,
     heartbeatCount: 0,
@@ -86,6 +87,10 @@ const WriteUntilYouDie = (() => {
   // ============================================
 
   const clearAllTimers = () => {
+    if (state.graceTimerId) {
+      clearTimeout(state.graceTimerId);
+      state.graceTimerId = null;
+    }
     if (state.countdownTimerId) {
       clearInterval(state.countdownTimerId);
       state.countdownTimerId = null;
@@ -106,17 +111,34 @@ const WriteUntilYouDie = (() => {
   };
 
   /**
-   * Starts countdown immediately when user stops typing.
-   * Heartbeat pulses once per second.
+   * Schedules the countdown after a 1-second grace period.
+   * No visual feedback during grace — just a brief pause.
    */
   const startCountdown = () => {
+    // Clear any existing grace timer
+    if (state.graceTimerId) {
+      clearTimeout(state.graceTimerId);
+      state.graceTimerId = null;
+    }
+
+    state.graceTimerId = setTimeout(() => {
+      state.graceTimerId = null;
+      beginActiveCountdown();
+    }, 1000);
+  };
+
+  /**
+   * The actual countdown with heartbeat, blur, and progress bar.
+   * Only runs after the 1s grace period.
+   */
+  const beginActiveCountdown = () => {
     state.countdownActive = true;
     state.countdownStart = Date.now();
     state.heartbeatCount = 0;
     elements.progressContainer.classList.add('active');
     elements.editorWrapper.classList.add('countdown-active');
 
-    // Trigger first heartbeat immediately
+    // First heartbeat at countdown start
     triggerHeartbeat();
 
     state.countdownTimerId = setInterval(() => {
@@ -154,6 +176,10 @@ const WriteUntilYouDie = (() => {
   };
 
   const stopCountdown = () => {
+    if (state.graceTimerId) {
+      clearTimeout(state.graceTimerId);
+      state.graceTimerId = null;
+    }
     if (state.countdownTimerId) {
       clearInterval(state.countdownTimerId);
       state.countdownTimerId = null;
