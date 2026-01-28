@@ -135,10 +135,12 @@ const WriteUntilYouDie = (() => {
     state.countdownActive = true;
     state.countdownStart = Date.now();
     state.heartbeatCount = 0;
+    state.lastBeatTime = 0;
     elements.progressContainer.classList.add('active');
     elements.editorWrapper.classList.add('countdown-active');
 
     // First heartbeat at countdown start
+    state.lastBeatTime = Date.now();
     triggerHeartbeat();
 
     state.countdownTimerId = setInterval(() => {
@@ -150,14 +152,20 @@ const WriteUntilYouDie = (() => {
       elements.progressBar.style.width = `${progress * 100}%`;
       elements.pauseTimer.textContent = `${remaining.toFixed(1)}s`;
 
-      // Blur increases as time runs out
-      const blurAmount = ((1 - progress) * 15);
-      elements.textArea.style.filter = `blur(${blurAmount}px)`;
+      // Pulsing blur: base level rises over time, beats cause spikes
+      const baseBlur = (1 - progress) * 10;
+      const timeSinceBeat = (Date.now() - state.lastBeatTime) / 1000;
+      // Sharp spike that decays: peaks at ~0.15s, fades by ~0.6s
+      const beatPulse = timeSinceBeat < 0.6
+        ? Math.sin(timeSinceBeat / 0.6 * Math.PI) * (6 + baseBlur * 0.5)
+        : 0;
+      elements.textArea.style.filter = `blur(${baseBlur + beatPulse}px)`;
 
       // Heartbeat: 1 per second
       const currentBeat = Math.floor(elapsed);
       if (currentBeat > state.heartbeatCount) {
         state.heartbeatCount = currentBeat;
+        state.lastBeatTime = Date.now();
         triggerHeartbeat();
       }
 
@@ -170,7 +178,6 @@ const WriteUntilYouDie = (() => {
 
   const triggerHeartbeat = () => {
     elements.editorWrapper.classList.remove('heartbeat');
-    // Force reflow to restart animation
     void elements.editorWrapper.offsetWidth;
     elements.editorWrapper.classList.add('heartbeat');
   };
